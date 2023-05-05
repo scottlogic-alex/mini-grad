@@ -23,7 +23,7 @@ def trace(root: BadTensor) -> GraphModelGeneric[BadTensor]:
   def build(v: BadTensor):
     if v not in nodes:
       nodes.add(v)
-      for child in v.ancestors():
+      for child in v.parents:
         edge: EdgeGeneric[BadTensor] = EdgeGeneric(from_=child, to=v)
         edges.add(edge)
         build(child)
