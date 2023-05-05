@@ -64,3 +64,13 @@ Having activated your virtual environment, install dependencies:
 ```bash
 pip install -r requirements.txt
 ```
+
+### Install optional package dependencies
+
+For interactive usage:
+
+```bash
+pip install ipykernel ipython
+```
+
+Also install the [`graphviz` executable](https://www.graphviz.org/download/) and ensure that it is on your `PATH`.
