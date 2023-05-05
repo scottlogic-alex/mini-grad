@@ -39,7 +39,8 @@ def draw_dot(root: BadTensor) -> Digraph:
     assert isinstance(n, BadTensor)
     uid = str(id(n))
     # for any value in the graph, create a rectangular ('record') node for it
-    dot.node(name = uid, label = "{ %s | data %.4f | grad %.4f }" % (n.label, n.data[0], 0. if n.grad is None else n.grad[0]), shape='record')
+    # https://graphviz.org/doc/info/shapes.html#record
+    dot.node(name = uid, label = "{ %s | data %.4f | grad %.4f }" % (n.label, n.data[0], n.grad[0]), shape='record')
     if n.op:
       # if this value is a result of some operation, create an op node for it
       dot.node(name = uid + n.op, label = n.op)
