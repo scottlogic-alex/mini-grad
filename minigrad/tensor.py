@@ -9,6 +9,7 @@ class Op(StrEnum):
   add = '+'
   sub = '−'
   mul = '×'
+  relu = 'ReLU'
 
 Backward: TypeAlias = Callable[[], None]
 
@@ -43,6 +44,17 @@ class BadTensor:
     sum._backward = _backward
     return sum
 
+  # https://www.programiz.com/python-programming/operator-overloading
+  def __sub__(self, other: BadTensor) -> BadTensor:
+    sum = BadTensor(self.data - other.data, parents=(self, other), op=Op.sub)
+    def _backward() -> None:
+      # dsum_dself = 1
+      # dsum_dother = 1
+      self.grad += sum.grad # * dsum_dself
+      other.grad += sum.grad # * dsum_dother
+    sum._backward = _backward
+    return sum
+
   def __mul__(self, other: BadTensor) -> BadTensor:
     prod = BadTensor(self.data * other.data, parents=(self, other), op=Op.mul)
     def _backward() -> None:
@@ -52,6 +64,15 @@ class BadTensor:
       other.grad += prod.grad * dprod_dother
     prod._backward = _backward
     return prod
+
+  def relu(self) -> BadTensor:
+    gated = BadTensor(self.data.clip(0.), parents=(self), op=Op.relu)
+    def _backward() -> None:
+      # TODO: needs testing
+      dgated_dself = (gated.data > 0.).astype(float)
+      self.grad += gated.grad * dgated_dself
+    gated._backward = _backward
+    return gated
   
   def label_(self, label: str) -> BadTensor:
     self.label = label
