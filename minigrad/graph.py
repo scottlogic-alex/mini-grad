@@ -43,7 +43,7 @@ def draw_dot(root: BadTensor) -> Digraph:
     dot.node(name = uid, label = "{ %s | data %.4f | grad %.4f }" % (n.label, n.data[0], n.grad[0]), shape='record')
     if n.op:
       # if this value is a result of some operation, create an op node for it
-      dot.node(name = uid + n.op, label = n.op)
+      dot.node(name = uid + n.op, label = n.op_format())
       # and connect this node to it
       dot.edge(uid + n.op, uid)
 

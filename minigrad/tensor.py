@@ -9,29 +9,37 @@ class Op(StrEnum):
   add = '+'
   sub = '−'
   mul = '×'
+  exp = '**'
   relu = 'ReLU'
 
 Backward: TypeAlias = Callable[[], None]
+OpFormat: TypeAlias = Callable[[], str]
 
 class BadTensor:
   data: NDArray
   grad: NDArray
   parents: Iterable[BadTensor]
   op: Optional[Op]
+  op_format: OpFormat
   label: Optional[str]
   _backward: Optional[Backward] = None
+  train_me: bool
   def __init__(
     self,
     data: NDArray,
     parents: Iterable[BadTensor] = (),
     op: Optional[Op] = None,
-    label: Optional[str] = None
+    op_format: Optional[OpFormat] = None,
+    label: Optional[str] = None,
+    train_me: bool = False,
   ) -> None:
     self.data = data
     self.grad = zeros_like(data)
     self.parents = parents
     self.op = op
+    self.op_format = op_format or (lambda: self.op)
     self.label = label
+    self.train_me = train_me
 
   # https://www.programiz.com/python-programming/operator-overloading
   def __add__(self, other: BadTensor) -> BadTensor:
@@ -49,9 +57,9 @@ class BadTensor:
     sum = BadTensor(self.data - other.data, parents=(self, other), op=Op.sub)
     def _backward() -> None:
       # dsum_dself = 1
-      # dsum_dother = 1
+      # dsum_dother = -1
       self.grad += sum.grad # * dsum_dself
-      other.grad += sum.grad # * dsum_dother
+      other.grad -= sum.grad
     sum._backward = _backward
     return sum
 
@@ -64,6 +72,16 @@ class BadTensor:
       other.grad += prod.grad * dprod_dother
     prod._backward = _backward
     return prod
+
+  def __pow__(self, other: BadTensor | float | int) -> BadTensor:
+    if isinstance(other, BadTensor):
+      raise ValueError('exp not yet implemented for tensor')
+    exp = BadTensor(self.data ** other, parents=(self,), op=Op.exp, op_format=lambda: f'{Op.exp}{other}')
+    def _backward() -> None:
+      dexp_dself = self.data * other
+      self.grad += exp.grad * dexp_dself
+    exp._backward = _backward
+    return exp
 
   def relu(self) -> BadTensor:
     gated = BadTensor(self.data.clip(0.), parents=(self), op=Op.relu)
