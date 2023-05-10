@@ -32,7 +32,7 @@ def trace(root: BadTensor) -> GraphModelGeneric[BadTensor]:
   return graph
 
 def draw_dot(root: BadTensor) -> Digraph:
-  dot = Digraph(format='svg', graph_attr={'rankdir': 'LR'}) # LR = left to right
+  dot = Digraph(format='svg', graph_attr={'rankdir': 'LR', 'size': '20,20!'}) # LR = left to right
   
   nodes, edges = trace(root)
   for n in nodes:
