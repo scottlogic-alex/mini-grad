@@ -1,6 +1,6 @@
 from __future__ import annotations
 from numpy.typing import NDArray
-from numpy import ones_like, zeros_like, array_str, broadcast_to, repeat, expand_dims, allclose, array, zeros
+from numpy import ones_like, zeros_like, array_str, broadcast_to, repeat, expand_dims, allclose, array, zeros, atleast_1d
 from typing import Optional, Generator, Iterable, TypeAlias, Callable
 from enum import StrEnum
 from collections import deque
@@ -39,7 +39,7 @@ class BadTensor:
     train_me: bool = False,
   ) -> None:
     self.data = data
-    self.grad = zeros_like(data)# if grad is None else grad
+    self.grad = zeros_like(data, dtype=float)# if grad is None else grad
     self.parents = parents
     self.op = op
     self.op_format = op_format or (lambda: self.op)
@@ -48,7 +48,7 @@ class BadTensor:
   
   # TODO: verify correctness
   def sum(self, dim: Optional[int] = None) -> BadTensor:
-    sum = BadTensor(array(self.data.sum(dim)), parents=(self,), op=Op.sum)
+    sum = BadTensor(atleast_1d(self.data.sum(dim)), parents=(self,), op=Op.sum)
     def _backward() -> None:
       # dsum_dself = ones_like(self.data)
       self.grad += sum.grad # * dsum_dself
