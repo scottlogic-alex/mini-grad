@@ -70,11 +70,11 @@ def simple_sum() -> Generator[BadTensor, None, None]:
     for t in mse.ancestors():
       t.grad = zeros_like(t.data)
 
-it = simple_sum()
+# it, needle_label = simple_sum(), 'learned_bias'
+it, needle_label = feet_inches_mat(), 'learned_feet_to_cm'
 
-# root: BadTensor = next(islice(feet_inches_mat(), 100, None))
 for step, _ in zip(it, range(100)):
   print(f'loss: {step.data[0]}')
-needle: BadTensor = next((t for t in step.ancestors() if t.label == 'learned_bias'))
+needle: BadTensor = next((t for t in step.ancestors() if t.label == needle_label))
 print(needle)
 pass # somewhere to put a breakpoint
