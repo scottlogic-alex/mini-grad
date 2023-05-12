@@ -9,16 +9,16 @@ from itertools import islice
 
 set_printoptions(suppress=True)
 def feet_inches_mat() -> Generator[BadTensor, None, None]:
-  minibatch_size = 1
+  minibatch_size = 10
   # true_weights = array([[2.54*12*.01, 2.54*.01], [2.54*12, 2.54], [2.54*12*10, 2.54*10]]).T
   # true_weights = array([[2.54*12, 2.54], [2.54*12*10, 2.54*10]]).T
   true_weights = array([[2.54*12, 2.54]]).T
   # true_weights = array([[2.54*12]]).T
   # lr =1e-5 * minibatch_size
-  lr = 5e-3# * minibatch_size
+  # lr = 5e-3# * minibatch_size
   # lr = 5e-3# * minibatch_size
   # lr = 1e-3# * minibatch_size
-  # lr = 1e-2 * minibatch_size
+  lr = 1e-2 * minibatch_size # known-good for batch-of-10 feet_in->cm
   # lr = 1e-2# * minibatch_size
   # lr = 1e-1# * minibatch_size
   # should converge on true_weights
@@ -35,6 +35,7 @@ def feet_inches_mat() -> Generator[BadTensor, None, None]:
   while True:
     # inputs = rand(16, 2) * r_[10, 12] # array([[6., 0.], [5., 2.], [4., 5.], [3., 11.], [2., 7.]])
     inputs = rand(minibatch_size, 2) * r_[10, 12]
+    # inputs = array([[6., 1.]]).repeat(minibatch_size, 0)
     # inputs = rand(minibatch_size, 1) * r_[10]
     input_feet_inches = BadTensor(inputs, label='input_feet_inches')
     # input_feet_inches = BadTensor(inputs, label='input_feet')
