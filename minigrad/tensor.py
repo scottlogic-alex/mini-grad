@@ -46,10 +46,17 @@ class BadTensor:
     self.label = label
     self.train_me = train_me
   
-  # TODO: verify correctness
   def sum(self, dim: Optional[int] = None) -> BadTensor:
     sum = BadTensor(atleast_1d(self.data.sum(dim)), parents=(self,), op=Op.sum)
     def _backward() -> None:
+      # sum     = self0 + self1 + self2
+      # dsum_dself0 = 1
+      # dsum_dself1 = 1
+      # dsum_dself2 = 1
+      # self0.grad += droot_dsum * dsum_dself0
+      #             =   sum.grad * dsum_dself0
+      #             =   sum.grad
+
       # dsum_dself = ones_like(self.data)
       self.grad += sum.grad # * dsum_dself
     sum._backward = _backward
@@ -87,7 +94,6 @@ class BadTensor:
     prod._backward = _backward
     return prod
 
-  # TODO: verify correctness
   def __truediv__(self, other: BadTensor | int | float) -> BadTensor:
     if isinstance(other, BadTensor):
       quot_data: NDArray = self.data / other.data
@@ -98,12 +104,12 @@ class BadTensor:
     quot = BadTensor(quot_data, parents=quot_parents, op=Op.div)
     def _backward() -> None:
       if isinstance(other, BadTensor):
-        dprod_dself: BadTensor = other.data
-        dprod_dother = self.data
-        other.grad += quot.grad / dprod_dother
+        dquot_dself: NDArray = other.data**-1
+        dquot_dother = self.data * -other.data**-2
+        other.grad += quot.grad * dquot_dother
       else:
-        dprod_dself: int | float = other
-      self.grad += quot.grad / dprod_dself
+        dquot_dself: int | float = other**-1
+      self.grad += quot.grad * dquot_dself
     quot._backward = _backward
     return quot
 
