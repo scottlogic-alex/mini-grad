@@ -10,9 +10,9 @@ from itertools import islice
 set_printoptions(suppress=True)
 def feet_inches_mat() -> Generator[BadTensor, None, None]:
   minibatch_size = 10
-  # true_weights = array([[2.54*12*.01, 2.54*.01], [2.54*12, 2.54], [2.54*12*10, 2.54*10]]).T
+  true_weights = array([[2.54*12*.01, 2.54*.01], [2.54*12, 2.54], [2.54*12*10, 2.54*10]]).T
   # true_weights = array([[2.54*12, 2.54], [2.54*12*10, 2.54*10]]).T
-  true_weights = array([[2.54*12, 2.54]]).T
+  # true_weights = array([[2.54*12, 2.54]]).T
   # true_weights = array([[2.54*12]]).T
   # lr = 1e-5 * minibatch_size
   # lr = 5e-3# * minibatch_size
@@ -22,9 +22,9 @@ def feet_inches_mat() -> Generator[BadTensor, None, None]:
   # lr = 1e-2# * minibatch_size
   # lr = 1e-1# * minibatch_size
   # should converge on true_weights
-  # feet_inches_to_cm = BadTensor(zeros_like(true_weights), label='learned_feet_inches_to_m_cm_mm', train_me=True)
+  feet_inches_to_cm = BadTensor(zeros_like(true_weights), label='learned_feet_inches_to_m_cm_mm', train_me=True)
   # feet_inches_to_cm = BadTensor(zeros_like(true_weights), label='learned_feet_inches_to_cm_mm', train_me=True)
-  feet_inches_to_cm = BadTensor(zeros_like(true_weights), label='learned_feet_inches_to_cm', train_me=True)
+  # feet_inches_to_cm = BadTensor(zeros_like(true_weights), label='learned_feet_inches_to_cm', train_me=True)
   # feet_inches_to_cm = BadTensor(zeros_like(true_weights), label='learned_feet_to_cm', train_me=True)
   # feet_inches_to_cm = BadTensor(true_weights, label='learned_feet_inches_to_m_cm_mm', train_me=True)
 
@@ -99,9 +99,9 @@ def simple_sum() -> Generator[BadTensor, None, None]:
 
 # it, needle_label = simple_sum(), 'learned_bias'
 # it, needle_label = feet_inches_mat(), 'learned_feet_to_cm'
-it, needle_label = feet_inches_mat(), 'learned_feet_inches_to_cm'
+# it, needle_label = feet_inches_mat(), 'learned_feet_inches_to_cm'
 # it, needle_label = feet_inches_mat(), 'learned_feet_inches_to_cm_mm'
-# it, needle_label = feet_inches_mat(), 'learned_feet_inches_to_m_cm_mm'
+it, needle_label = feet_inches_mat(), 'learned_feet_inches_to_m_cm_mm'
 
 for step, _ in zip(it, range(100)):
   print(f'loss: {step.data[0]}')

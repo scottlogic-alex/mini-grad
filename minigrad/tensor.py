@@ -157,7 +157,8 @@ class BadTensor:
       # these are likely to be wrong
       self.grad += mm.grad.sum(-1, keepdims=True) * other.data.sum(-1)
       # other.grad += mm.grad.sum(-2) * self.data.sum(-2, keepdims=True).T
-      other.grad += (mm.grad.repeat(self.data.shape[-1], -1) * self.data).sum(-2, keepdims=True).T
+      # other.grad += (mm.grad.repeat(self.data.shape[-1], -1) * self.data).sum(-2, keepdims=True).T
+      other.grad += (expand_dims(self.data.T, -1).repeat(other.grad.shape[-1], -1, ) * mm.grad).sum(-2)
     mm._backward = _backward
     return mm
 
