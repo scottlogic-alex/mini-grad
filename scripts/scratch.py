@@ -14,7 +14,7 @@ def feet_inches_mat() -> Generator[BadTensor, None, None]:
   # true_weights = array([[2.54*12, 2.54], [2.54*12*10, 2.54*10]]).T
   true_weights = array([[2.54*12, 2.54]]).T
   # true_weights = array([[2.54*12]]).T
-  # lr =1e-5 * minibatch_size
+  # lr = 1e-5 * minibatch_size
   # lr = 5e-3# * minibatch_size
   # lr = 5e-3# * minibatch_size
   # lr = 1e-3# * minibatch_size
@@ -22,10 +22,10 @@ def feet_inches_mat() -> Generator[BadTensor, None, None]:
   # lr = 1e-2# * minibatch_size
   # lr = 1e-1# * minibatch_size
   # should converge on true_weights
-  # feet_inches_to_cm = BadTensor(array([[0., 0.], [0., 0.], [0., 0.]]).T, label='learned_feet_inches_to_m_cm_mm', train_me=True)
-  # feet_inches_to_cm = BadTensor(array([[0., 0.], [0., 0.]]).T, label='learned_feet_inches_to_cm_mm', train_me=True)
-  feet_inches_to_cm = BadTensor(array([[0., 0.]]).T, label='learned_feet_inches_to_cm', train_me=True)
-  # feet_inches_to_cm = BadTensor(array([[0.]]).T, label='learned_feet_to_cm', train_me=True)
+  # feet_inches_to_cm = BadTensor(zeros_like(true_weights), label='learned_feet_inches_to_m_cm_mm', train_me=True)
+  # feet_inches_to_cm = BadTensor(zeros_like(true_weights), label='learned_feet_inches_to_cm_mm', train_me=True)
+  feet_inches_to_cm = BadTensor(zeros_like(true_weights), label='learned_feet_inches_to_cm', train_me=True)
+  # feet_inches_to_cm = BadTensor(zeros_like(true_weights), label='learned_feet_to_cm', train_me=True)
   # feet_inches_to_cm = BadTensor(true_weights, label='learned_feet_inches_to_m_cm_mm', train_me=True)
 
   ema_history_depth = 10
@@ -33,16 +33,13 @@ def feet_inches_mat() -> Generator[BadTensor, None, None]:
   ema_history: Dict[BadTensor, NDArray] = {}
 
   while True:
-    # inputs = rand(16, 2) * r_[10, 12] # array([[6., 0.], [5., 2.], [4., 5.], [3., 11.], [2., 7.]])
     inputs = rand(minibatch_size, 2) * r_[10, 12]
-    # inputs = array([[6., 1.]]).repeat(minibatch_size, 0)
     # inputs = rand(minibatch_size, 1) * r_[10]
     input_feet_inches = BadTensor(inputs, label='input_feet_inches')
     # input_feet_inches = BadTensor(inputs, label='input_feet')
     # expected_cm = BadTensor(inputs @ true_weights, label='true_cm_mm')
     expected_cm = BadTensor(inputs @ true_weights, label='true_cm')
 
-    # inputs = rand(1, 1) * r_[10]
     predicted_cm = (input_feet_inches @ feet_inches_to_cm).label_('predicted_cm')
     diff = (expected_cm - predicted_cm).label_('diff')
     L2 = (diff ** 2).label_('L2')
