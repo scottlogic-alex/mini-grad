@@ -124,41 +124,23 @@ class BadTensor:
     return exp
 
   def __matmul__(self, other: BadTensor) -> BadTensor:
-    # self=input @ other=weights
     mm = BadTensor(self.data @ other.data, parents=(self, other), op=Op.matmul)
     def _backward() -> None:
-      # dmm_dsum = broadcast_to(other.data.T, (*self.data.shape[:-1], *other.data.shape[:-1]))
-      # dmm_dself = other.data.T.repeat(self.data.shape[0], axis=0)
-      # dmm_dother = self.data
-      # self_broadcast = expand_dims(self.data, -2).repeat(other.data.shape[-1], axis=-2)
-      # other_broadcast = expand_dims(other.data.T, 0).repeat(self.data.shape[0], axis=0)
+      # self_broadcast = expand_dims(self.data, -2)
+      # other_broadcast = expand_dims(other.data.T, -3)
       # hadamard = self_broadcast * other_broadcast
       # alt_matmul = hadamard.sum(-1)
-      # hadamard.sum(0)
 
       # dhada_dself = other_broadcast
       # dhada_dother = self_broadcast
       # dmm_dhada = ones_like(self_broadcast)
 
-      # print(alt_matmul)
-      # print(dhada_dself)
-      # print(dhada_dother)
-      # print(dmm_dhada)
-      # print(mm)
-      # pass
-      # dsum_dmm = ones_like()
-      # dself_dsum = 1
-      # TODO: check whether we need to transpose
-      # dmm_dself = other.data
-      # dmm_dother = self.data
-      # other.grad += mm.grad * self.data.sum(0, keepdims=True).repeat(other.data.shape[-1], axis=-2).T
-      # self.grad += mm.grad * dmm_dself
-
       # these are likely to be wrong
-      self.grad += mm.grad.sum(-1, keepdims=True) * other.data.sum(-1)
+      # self.grad += mm.grad.sum(-1, keepdims=True) * other.data.sum(-1)
+      self.grad += (expand_dims(mm.grad, -1) * expand_dims(other.data.T, -3)).sum(-2)
       # other.grad += mm.grad.sum(-2) * self.data.sum(-2, keepdims=True).T
       # other.grad += (mm.grad.repeat(self.data.shape[-1], -1) * self.data).sum(-2, keepdims=True).T
-      other.grad += (expand_dims(self.data.T, -1).repeat(other.grad.shape[-1], -1, ) * mm.grad).sum(-2)
+      other.grad += (expand_dims(self.data.T, -1) * mm.grad).sum(-2)
     mm._backward = _backward
     return mm
 
