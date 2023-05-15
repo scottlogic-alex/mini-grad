@@ -46,9 +46,6 @@ def feet_inches_mat() -> Generator[BadTensor, None, None]:
     sum = (L2.sum()).label_('sum')
     mse = (sum / L2.data.size).label_('MSE')
 
-    if mse.data[0] < 1:
-      pass
-
     mse.backward()
 
     yield mse

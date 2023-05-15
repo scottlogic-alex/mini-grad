@@ -1,6 +1,7 @@
 from minigrad.tensor import BadTensor
 from graphviz import Digraph
-from typing import NamedTuple, Set, Generic, TypeVar
+from typing import NamedTuple, Set, Generic, TypeVar, List, Generator, Iterable
+from numpy.typing import NDArray
 
 TNode = TypeVar('TNode')
 
@@ -31,8 +32,23 @@ def trace(root: BadTensor) -> GraphModelGeneric[BadTensor]:
   graph: GraphModelGeneric[BadTensor] = GraphModelGeneric(nodes, edges)
   return graph
 
+def elem_strs(arr: Iterable[NDArray]) -> Generator[str, None, None]:
+  for elem in arr:
+    yield '%.2f' % (elem,)
+
+def join_elems(arr: List[str]) -> str:
+  if len(arr) == 1:
+    return arr[0]
+  return '{ %s }' % (' | '.join(arr),)
+
+def make_label(data: NDArray) -> str:
+  if data.ndim == 1:
+    return join_elems(tuple(elem_strs(data)))
+  as_2d = data.reshape(-1, data.shape[-1])
+  return join_elems([make_label(row) for row in as_2d])
+
 def draw_dot(root: BadTensor) -> Digraph:
-  dot = Digraph(format='svg', graph_attr={'rankdir': 'LR', 'size': '20,20!'}) # LR = left to right
+  dot = Digraph(format='svg', graph_attr={'rankdir': 'LR', 'size': '15,15!'}) # LR = left to right
   
   nodes, edges = trace(root)
   for n in nodes:
@@ -40,7 +56,7 @@ def draw_dot(root: BadTensor) -> Digraph:
     uid = str(id(n))
     # for any value in the graph, create a rectangular ('record') node for it
     # https://graphviz.org/doc/info/shapes.html#record
-    dot.node(name = uid, label = "{ %s | data %.4f | grad %.4f }" % (n.label, n.data[0], n.grad[0]), shape='record')
+    dot.node(name = uid, label = "%s | { data | %s | grad | %s }" % (n.label, make_label(n.data), make_label(n.grad)), shape='record')
     if n.op:
       # if this value is a result of some operation, create an op node for it
       dot.node(name = uid + n.op, label = n.op_format())
