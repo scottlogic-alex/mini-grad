@@ -37,8 +37,6 @@ def elem_strs(arr: Iterable[NDArray]) -> Generator[str, None, None]:
     yield '%.2f' % (elem,)
 
 def join_elems(arr: List[str]) -> str:
-  if len(arr) == 1:
-    return arr[0]
   return '{ %s }' % (' | '.join(arr),)
 
 def make_label(data: NDArray) -> str:
