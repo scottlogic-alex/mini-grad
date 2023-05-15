@@ -12,7 +12,7 @@ class Op(StrEnum):
   sub = '−'
   mul = '×'
   div = '÷'
-  matmul = ':'
+  matmul = '@'
   exp = '**'
   relu = 'ReLU'
 
