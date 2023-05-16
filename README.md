@@ -70,7 +70,7 @@ pip install -r requirements.txt
 For interactive usage:
 
 ```bash
-pip install ipykernel ipython
+pip install ipykernel ipython ipywidgets
 ```
 
 Also install the [`graphviz` executable](https://www.graphviz.org/download/) and ensure that it is on your `PATH`.
