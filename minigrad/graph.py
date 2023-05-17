@@ -1,6 +1,6 @@
 from minigrad.tensor import BadTensor
 from graphviz import Digraph
-from typing import NamedTuple, Set, Generic, TypeVar, List, Generator, Iterable
+from typing import NamedTuple, Set, Generic, TypeVar, List, Generator, Iterable, Dict, TypedDict
 from numpy.typing import NDArray
 
 TNode = TypeVar('TNode')
@@ -45,8 +45,16 @@ def make_label(data: NDArray) -> str:
   as_2d = data.reshape(-1, data.shape[-1])
   return join_elems([make_label(row) for row in as_2d])
 
-def draw_dot(root: BadTensor) -> Digraph:
-  dot = Digraph(format='svg', graph_attr={'rankdir': 'LR', 'size': '15,15!'}) # LR = left to right
+default_graph_attr: Dict[str, str] = {
+  # LR = left to right
+  'rankdir': 'LR',
+}
+
+def draw_dot(
+  root: BadTensor,
+  graph_attr: Dict[str, str] = default_graph_attr,
+) -> Digraph:
+  dot = Digraph(format='svg', graph_attr=graph_attr)
   
   nodes, edges = trace(root)
   for n in nodes:
@@ -54,7 +62,12 @@ def draw_dot(root: BadTensor) -> Digraph:
     uid = str(id(n))
     # for any value in the graph, create a rectangular ('record') node for it
     # https://graphviz.org/doc/info/shapes.html#record
-    dot.node(name = uid, label = "%s | { data | %s | grad | %s }" % (n.label, make_label(n.data), make_label(n.grad)), shape='record')
+    label_tensors = (
+      'data | %s | grad | %s' % (make_label(n.data), make_label(n.grad))
+    ) if graph_attr['rankdir'] == 'LR' else (
+      'data | { %s } | grad | { %s }' % (make_label(n.data), make_label(n.grad))
+    )
+    dot.node(name = uid, label = "%s | { %s }" % (n.label, label_tensors), shape='record')
     if n.op:
       # if this value is a result of some operation, create an op node for it
       dot.node(name = uid + n.op, label = n.op_format())
