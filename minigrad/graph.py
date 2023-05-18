@@ -1,6 +1,7 @@
 from minigrad.tensor import BadTensor
 from graphviz import Digraph
-from typing import NamedTuple, Set, Generic, TypeVar, List, Generator, Iterable, Dict, TypedDict
+from typing import NamedTuple, Set, Generic, TypeVar, Generator, Iterable, Dict
+from numpy import concatenate
 from numpy.typing import NDArray
 
 TNode = TypeVar('TNode')
@@ -44,15 +45,9 @@ def row_strs_to_trs(arr: Iterable[str]) -> Generator[str, None, None]:
   for elem in arr:
     yield f'<tr>{elem}</tr>'
 
-def ndarray_to_table(arr: NDArray, heading: str) -> str:
+def ndarray_to_table_rows(arr: NDArray) -> Generator[str, None, None]:
   as_2d = arr.reshape(-1, arr.shape[-1])
-  tdata = ''.join((
-    f'''<tr>
-      <td colspan="{arr.shape[-1]}">{heading}</td>
-    </tr>''',
-    *row_strs_to_trs((tuple(num_strs_to_tds(nums_to_num_strs(row))) for row in as_2d)),
-  ))
-  return f'<table border="0" cellborder="1" cellspacing="0">{tdata}</table>'
+  return row_strs_to_trs(''.join(num_strs_to_tds(nums_to_num_strs(row))) for row in as_2d)
 
 default_graph_attr: Dict[str, str] = {
   # LR = left to right
@@ -69,21 +64,16 @@ def draw_dot(
   for n in nodes:
     assert isinstance(n, BadTensor)
     uid = str(id(n))
-    # for any value in the graph, create a rectangular ('record') node for it
-    # https://graphviz.org/doc/info/shapes.html#record
-    data_tdata: str = ndarray_to_table(n.data, 'data')
-    grad_tdata: str = ndarray_to_table(n.grad, 'grad')
-    supertable = f'''<table border="0" cellborder="0" cellspacing="0" cellpadding="0">
-      <tr>
-        <td cellspacing="0" cellpadding="0" colspan="2">{n.label}</td>
-      </tr>
-      <tr>
-        <td cellspacing="0" cellpadding="0">{data_tdata}</td>
-        <td cellspacing="0" cellpadding="0">{grad_tdata}</td>
-      </tr>
-    </table>'''
 
-    dot.node(name = uid, label=f'<{supertable}>', shape='record')
+    catted = concatenate([n.data, n.grad], axis=-1)
+    tdata = ''.join((
+      f'<tr><td colspan="{catted.data.shape[-1]}">{n.label}</td></tr>'
+      f'<tr><td colspan="{n.data.shape[-1]}">data</td><td colspan="{n.grad.shape[-1]}">grad</td></tr>',
+      *ndarray_to_table_rows(catted),
+    ))
+    table = f'<table border="0" cellborder="1" cellspacing="0">{tdata}</table>'
+    
+    dot.node(name=uid, shape='plain', label=f'<{table}>')
     if n.op:
       # if this value is a result of some operation, create an op node for it
       dot.node(name = uid + n.op, label = n.op_format())
