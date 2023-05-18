@@ -32,18 +32,27 @@ def trace(root: BadTensor) -> GraphModelGeneric[BadTensor]:
   graph: GraphModelGeneric[BadTensor] = GraphModelGeneric(nodes, edges)
   return graph
 
-def elem_strs(arr: Iterable[NDArray]) -> Generator[str, None, None]:
+def nums_to_num_strs(arr: Iterable[NDArray]) -> Generator[str, None, None]:
   for elem in arr:
     yield '%.2f' % (elem,)
 
-def join_elems(arr: List[str]) -> str:
-  return '{ %s }' % (' | '.join(arr),)
+def num_strs_to_tds(arr: Iterable[str]) -> Generator[str, None, None]:
+  for elem in arr:
+    yield f'<td>{elem}</td>'
 
-def make_label(data: NDArray) -> str:
-  if data.ndim == 1:
-    return join_elems(tuple(elem_strs(data)))
-  as_2d = data.reshape(-1, data.shape[-1])
-  return join_elems([make_label(row) for row in as_2d])
+def row_strs_to_trs(arr: Iterable[str]) -> Generator[str, None, None]:
+  for elem in arr:
+    yield f'<tr>{elem}</tr>'
+
+def ndarray_to_table(arr: NDArray, heading: str) -> str:
+  as_2d = arr.reshape(-1, arr.shape[-1])
+  tdata = ''.join((
+    f'''<tr>
+      <td colspan="{arr.shape[-1]}">{heading}</td>
+    </tr>''',
+    *row_strs_to_trs((tuple(num_strs_to_tds(nums_to_num_strs(row))) for row in as_2d)),
+  ))
+  return f'<table border="0" cellborder="1" cellspacing="0">{tdata}</table>'
 
 default_graph_attr: Dict[str, str] = {
   # LR = left to right
@@ -62,12 +71,19 @@ def draw_dot(
     uid = str(id(n))
     # for any value in the graph, create a rectangular ('record') node for it
     # https://graphviz.org/doc/info/shapes.html#record
-    label_tensors = (
-      'data | %s | grad | %s' % (make_label(n.data), make_label(n.grad))
-    ) if graph_attr['rankdir'] == 'LR' else (
-      'data | { %s } | grad | { %s }' % (make_label(n.data), make_label(n.grad))
-    )
-    dot.node(name = uid, label = "%s | { %s }" % (n.label, label_tensors), shape='record')
+    data_tdata: str = ndarray_to_table(n.data, 'data')
+    grad_tdata: str = ndarray_to_table(n.grad, 'grad')
+    supertable = f'''<table border="0" cellborder="0" cellspacing="0" cellpadding="0">
+      <tr>
+        <td cellspacing="0" cellpadding="0" colspan="2">{n.label}</td>
+      </tr>
+      <tr>
+        <td cellspacing="0" cellpadding="0">{data_tdata}</td>
+        <td cellspacing="0" cellpadding="0">{grad_tdata}</td>
+      </tr>
+    </table>'''
+
+    dot.node(name = uid, label=f'<{supertable}>', shape='record')
     if n.op:
       # if this value is a result of some operation, create an op node for it
       dot.node(name = uid + n.op, label = n.op_format())
