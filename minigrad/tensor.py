@@ -126,21 +126,8 @@ class BadTensor:
   def __matmul__(self, other: BadTensor) -> BadTensor:
     mm = BadTensor(self.data @ other.data, parents=(self, other), op=Op.matmul)
     def _backward() -> None:
-      # self_broadcast = expand_dims(self.data, -2)
-      # other_broadcast = expand_dims(other.data.T, -3)
-      # hadamard = self_broadcast * other_broadcast
-      # alt_matmul = hadamard.sum(-1)
-
-      # dhada_dself = other_broadcast
-      # dhada_dother = self_broadcast
-      # dmm_dhada = ones_like(self_broadcast)
-
-      # these are likely to be wrong
-      # self.grad += mm.grad.sum(-1, keepdims=True) * other.data.sum(-1)
-      self.grad += (expand_dims(mm.grad, -1) * expand_dims(other.data.T, -3)).sum(-2)
-      # other.grad += mm.grad.sum(-2) * self.data.sum(-2, keepdims=True).T
-      # other.grad += (mm.grad.repeat(self.data.shape[-1], -1) * self.data).sum(-2, keepdims=True).T
-      other.grad += (expand_dims(self.data.T, -1) * mm.grad).sum(-2)
+      self.grad += mm.grad @ other.data.T
+      other.grad += self.data.T @ mm.grad
     mm._backward = _backward
     return mm
 
